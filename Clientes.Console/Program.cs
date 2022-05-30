@@ -14,78 +14,93 @@ namespace Clientes.Console
             var serviceProvider = new ServiceCollection()
                 .AddSingleton<IClientesService, ClientesService>()
                 .AddSingleton<IClientesRepository, ClientesRepository>()
-                .AddSingleton<ISerializationService, SerializationService>()
-                .AddSingleton<IHelper, Helper>()
+                .AddSingleton<IFileHelper, FileHelper>()
                 .BuildServiceProvider();
 
             var _clientesService = serviceProvider.GetService<IClientesService>();
 
-            System.Console.WriteLine("O que você deseja fazer?");
-            System.Console.WriteLine(
-                @"1 - Criar banco de dados JSON
-2 - Ler um registro
-3 - Atualizar um registro
-4 - Deletar um registro");
+            bool execute = true;
 
-            var option = int.Parse(System.Console.ReadLine());
-
-            switch (option)
+            while (execute is true)
             {
-                case 1:
-                    await _clientesService.Create();
+                System.Console.Clear();
+                System.Console.WriteLine("O que você deseja fazer?");
+                System.Console.WriteLine(
+                    @"1 - Criar banco de dados JSON
+2 - Ler um registro
+3 - Ler 10 registros
+4 - Atualizar um registro
+5 - Deletar um registro
+0 - Sair");
 
-                    break;
+                var option = int.Parse(System.Console.ReadLine());
 
-                case 2:
-                    {
-                        System.Console.WriteLine("Digite o ID do cliente:");
-
-                        var id = Guid.Parse(System.Console.ReadLine());
-
-                        await _clientesService.Read(id);
-
-                        break;
-                    }
-
-                case 3:
-                    {
-                        System.Console.WriteLine("Digite o ID do cliente:");
-                        var id = Guid.Parse(System.Console.ReadLine());
-
-                        System.Console.WriteLine("Digite o novo nome do cliente:");
-                        var nome = System.Console.ReadLine();
-
-                        System.Console.WriteLine("Digite a nova data de admissão do cliente:");
-                        var dataAdmissao = DateTime.Parse(System.Console.ReadLine());
-
-                        System.Console.WriteLine("Digite o novo salário do cliente:");
-                        var salario = decimal.Parse(System.Console.ReadLine());
-
-                        System.Console.WriteLine("Digite a nova comissão do cliente:");
-                        var comissao = decimal.Parse(System.Console.ReadLine());
-
-                        System.Console.WriteLine("Digite a nova data de inclusão do cliente:");
-                        var dataInclusao = DateTime.Parse(System.Console.ReadLine());
-
-                        await _clientesService.Update(id, nome, dataAdmissao, salario, comissao, dataInclusao);
+                switch (option)
+                {
+                    case 1:
+                        await _clientesService.Create();
 
                         break;
-                    }
 
-                case 4:
-                    {
-                        System.Console.WriteLine("Digite o ID do cliente:");
+                    case 2:
+                        {
+                            System.Console.WriteLine("Digite o Id do cliente:");
 
-                        var id = Guid.Parse(System.Console.ReadLine());
+                            var id = Guid.Parse(System.Console.ReadLine());
 
-                        await _clientesService.Delete(id);
+                            await _clientesService.Read(id);
+
+                            break;
+                        }
+
+                    case 3:
+                        await _clientesService.Read();
 
                         break;
-                    }
 
-                default: System.Console.WriteLine("Opção inválida.");
-                    break;
-            }
+                    case 4:
+                        {
+                            System.Console.WriteLine("Digite o Id do cliente:");
+                            var id = Guid.Parse(System.Console.ReadLine());
+
+                            System.Console.WriteLine("Digite o novo nome do cliente:");
+                            var nome = System.Console.ReadLine();
+
+                            System.Console.WriteLine("Digite a nova data de admissão do cliente:");
+                            var dataAdmissao = DateTime.Parse(System.Console.ReadLine());
+
+                            System.Console.WriteLine("Digite o novo salário do cliente:");
+                            var salario = decimal.Parse(System.Console.ReadLine());
+
+                            System.Console.WriteLine("Digite a nova comissão do cliente:");
+                            var comissao = decimal.Parse(System.Console.ReadLine());
+
+                            await _clientesService.Update(id, nome, dataAdmissao, salario, comissao);
+
+                            break;
+                        }
+
+                    case 5:
+                        {
+                            System.Console.WriteLine("Digite o Id do cliente:");
+
+                            var id = Guid.Parse(System.Console.ReadLine());
+
+                            await _clientesService.Delete(id);
+
+                            break;
+                        }
+                    case 0:
+                        execute = false;
+
+                        break;
+
+                    default:
+                        System.Console.WriteLine("Opção inválida.");
+
+                        break;
+                }
+            } 
         }
     }
 }
