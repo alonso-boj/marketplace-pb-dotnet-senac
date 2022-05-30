@@ -6,15 +6,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace Clientes.Application
+namespace Clientes.Data
 {
-    public class SerializationService : ISerializationService
+    public class FileHelper : IFileHelper
     {
-        public async Task<List<Cliente>> DeserializeInputJson()
+        public async Task<List<Cliente>> DeserializeJson(string fileLocation)
         {
             var clientList = new List<Cliente>();
 
-            using (var reader = new StreamReader("clientesInput.json"))
+            using (var reader = new StreamReader(fileLocation))
             {
                 var jsonString = await reader.ReadToEndAsync();
 
@@ -24,6 +24,13 @@ namespace Clientes.Application
             if (clientList is null) throw new Exception("A lista de clientes está vazia.");
 
             return clientList;
+        }
+
+        public async Task SaveJson(List<Cliente> customerList, string fileLocation)
+        {
+            var updatedJson = JsonConvert.SerializeObject(customerList, Formatting.Indented);
+
+            await File.WriteAllTextAsync(fileLocation, updatedJson);
         }
     }
 }

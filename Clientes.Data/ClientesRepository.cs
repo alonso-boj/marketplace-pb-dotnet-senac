@@ -1,10 +1,7 @@
 ﻿using Clientes.Domain.Contracts;
 using Clientes.Domain.Entities;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -12,28 +9,22 @@ namespace Clientes.Data
 {
     public class ClientesRepository : IClientesRepository
     {
-        private readonly IHelper _helper;
+        private readonly IFileHelper _fileHelper;
 
-        public ClientesRepository(IHelper helper)
+        public ClientesRepository(IFileHelper helper)
         {
-            _helper = helper;
+            _fileHelper = helper;
         }
 
-        public async Task CreateOutputJson(List<Cliente> customerList)
+        public async Task CreateJsonDatabase(List<Cliente> customerList)
         {
             foreach (var customer in customerList)
             {
                 customer.Id = Guid.NewGuid();
                 customer.DataInclusao = DateTime.Now;
-                customer.DataAlteracao = DateTime.Now;
             }
 
-            var outputJson = JsonConvert.SerializeObject(customerList, Formatting.Indented);
-
-            using (var writer = new StreamWriter("output.json"))
-            {
-                await writer.WriteAsync(outputJson);
-            }
+            await _fileHelper.SaveJson(customerList: customerList, fileLocation: "clientesOutput.json");
 
             Console.WriteLine("Banco de dados JSON gerado com sucesso.");
 
@@ -42,13 +33,9 @@ namespace Clientes.Data
 
         public async Task ReadCustomerById(Guid id)
         {
-            string jsonString = await _helper.GetJsonString();
+            var customerList = await _fileHelper.DeserializeJson(fileLocation: "clientesOutput.json");
 
-            var jArray = JArray.Parse(jsonString);
-
-            var entry = jArray.FirstOrDefault(entry => entry["id"].Value<string>() == id.ToString());
-
-            var customer = entry.ToObject<Cliente>();
+            var customer = customerList.FirstOrDefault(customer => customer.Id == id);
 
             Console.WriteLine(
                 @$"
@@ -63,33 +50,48 @@ DataAlteracao: {customer.DataAlteracao}");
             Console.ReadKey();
         }
 
+        public async Task ReadTenFirstCustomers()
+        {
+            var customerList = await _fileHelper.DeserializeJson(fileLocation: "clientesOutput.json");
+
+            for (int i = 0; i < 10; i++)
+            {
+                Console.WriteLine(
+                @$"
+Id: {customerList[i].Id}
+Nome: {customerList[i].Nome}
+DataAdmissao: {customerList[i].DataAdmissao}
+Salario: {customerList[i].Salario}
+Comissao: {customerList[i].Comissao}
+DataInclusao: {customerList[i].DataInclusao}
+DataAlteracao: {customerList[i].DataAlteracao}");
+            }
+
+            Console.ReadKey();
+        }
+
         public async Task UpdateCustomerById(
             Guid id,
             string? nome = null,
             DateTime? dataAdmissao = null,
             decimal? salario = null,
-            decimal? comissao = null,
-            DateTime? dataInclusao = null)
+            decimal? comissao = null)
         {
-            var jsonString = await _helper.GetJsonString();
+            var customerList = await _fileHelper.DeserializeJson(fileLocation: "clientesOutput.json");
 
-            var jArray = JArray.Parse(jsonString);
+            var customer = customerList.FirstOrDefault(customer => customer.Id == id);
 
-            var entry = jArray.FirstOrDefault(entry => entry["id"].Value<string>() == id.ToString());
+            if (nome is not null) customer.Nome = nome;
 
-            if (nome is not null) entry["nome"] = nome;
+            if (dataAdmissao is not null) customer.DataAdmissao = (DateTime)dataAdmissao;
 
-            if (dataAdmissao is not null) entry["dataAdmissao"] = dataAdmissao;
+            if (salario is not null) customer.Salario = (decimal)salario;
 
-            if (salario is not null) entry["salario"] = salario;
+            if (comissao is not null) customer.Comissao = (decimal)comissao;
 
-            if (comissao is not null) entry["comissao"] = comissao;
+            customer.DataAlteracao = DateTime.Now;
 
-            if (dataInclusao is not null) entry["dataInclusao"] = dataInclusao;
-
-            entry["dataAlteracao"] = DateTime.Now;
-
-            await _helper.UpdateJson(jArray);
+            await _fileHelper.SaveJson(customerList: customerList, fileLocation: "clientesOutput.json");
 
             Console.WriteLine("Cliente atualizado com sucesso.");
 
@@ -98,15 +100,13 @@ DataAlteracao: {customer.DataAlteracao}");
 
         public async Task DeleteCustomerById(Guid id)
         {
-            var jsonString = await _helper.GetJsonString();
+            var customerList = await _fileHelper.DeserializeJson(fileLocation: "clientesOutput.json");
 
-            var jArray = JArray.Parse(jsonString);
+            var customer = customerList.FirstOrDefault(customer => customer.Id == id);
 
-            var entry = jArray.FirstOrDefault(entry => entry["id"].Value<string>() == id.ToString());
+            customerList.Remove(customer);
 
-            entry.Remove();
-
-            await _helper.UpdateJson(jArray);
+            await _fileHelper.SaveJson(customerList: customerList, fileLocation: "clientesOutput.json");
 
             Console.WriteLine("Cliente deletado com sucesso.");
 
